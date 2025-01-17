@@ -6,6 +6,7 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 class WeatherCLI {
 
@@ -18,16 +19,22 @@ class WeatherCLI {
                 json()
             }
         }
+        val jsonParser = Json {
+            ignoreUnknownKeys = true
+        }
 
         try {
             val response: HttpResponse = client.get(weatherApiUrl) {
                 parameter("q", city)
-                parameter("appid", weatherApiKey)
+                parameter("key", weatherApiKey)
                 parameter("units", "metric")
             }
 
-            val weatherData: WeatherResponse = response.body()
-            println("Weather in ${weatherData.name}: ${weatherData.main.temp}°C, ${weatherData.weather[0].description.capitalize()}")
+            val responseBody = response.bodyAsText()
+
+            val weatherData = jsonParser.decodeFromString<WeatherResponse>(responseBody)
+
+            println("${weatherData.location.name} ${weatherData.current.temp_c}°C ${weatherData.current.condition.text}")
         } catch (e: Exception) {
             println("Error fetching weather data: ${e.message}")
         } finally {
@@ -37,14 +44,23 @@ class WeatherCLI {
 
     @Serializable
     data class WeatherResponse(
-        val name: String,
-        val weather: List<WeatherDetails>,
-        val main: MainDetails
+        val location: Location,
+        val current: Current
     )
 
     @Serializable
-    data class WeatherDetails(val description: String)
+    data class Location(
+        val name: String
+    )
 
     @Serializable
-    data class MainDetails(val temp: Float)
+    data class Current(
+        val temp_c: Double,
+        val condition: Condition
+    )
+
+    @Serializable
+    data class Condition(
+        val text: String
+    )
 }
