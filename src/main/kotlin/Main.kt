@@ -15,6 +15,7 @@ class CliToolsApp {
 
     private val helpHandler = HelpHandler()
     private val weatherHandler = WeatherCLI()
+    private val appLauncherHandler = AppLauncherCLI()
 
     fun showHelp() {
         helpHandler.displayHelp()
@@ -29,6 +30,15 @@ class CliToolsApp {
                     runBlocking { weatherHandler.getWeather(city) }
                 } else {
                     println("Usage: cli-tools weather <city>")
+                }
+            }
+
+            "app" -> {
+                if (args.size > 1) {
+                    val appName = args[1]
+                    appLauncherHandler.launchApp(appName)
+                } else {
+                    println("Usage: cli-tools app <app_name>")
                 }
             }
             else -> println("Unknown command: '${args[0]}'. Type '--help' for usage instructions.")
